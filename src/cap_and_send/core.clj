@@ -14,8 +14,8 @@
 (defn- delete-file [file] ""
   (fs/delete file))
 
-(defn- do-cap [cap-frame-cnt fps frame-dir] ""
-  (println "doing capture with total frames: " cap-frame-cnt
+(defn- do-cap [cap-time-secs fps frame-dir] ""
+  (println "doing capture with total time: " cap-time-secs
            " fps: " fps
            " into frame dir: " frame-dir)
   (let [in ["streamer"
@@ -26,14 +26,14 @@
             "-j"
             "100"
             "-t"
-            cap-frame-cnt
+            (str (* (read-string fps) (read-string cap-time-secs)))
             "-r"
             fps]]
     (try
-      (println "in: " in)
+      (println "cap in: " in)
       (apply sh in)
       (catch Throwable t
-        (println "error: " (.getMessage t))))))
+        (println "cap error: " t (.getMessage t))))))
 
 (defn- get-clip-number [frame-file] ""
   (let [name (.getName frame-file)
@@ -92,16 +92,22 @@
 
 (defn -main
   "I don't do a whole lot ... yet."
-  [cap-frame-cnt clip-interval fps frame-dir clip-dir intermediate-dir s3-upload-dir]
+  [cap-time-secs clip-interval-ms fps frame-dir clip-dir intermediate-dir s3-upload-dir]
   (do (clear-dir frame-dir)
       (clear-dir clip-dir)
       (clear-dir intermediate-dir)
       (clear-dir s3-upload-dir)
 
-      (future (do-cap cap-frame-cnt fps frame-dir))
-      (dotimes [i 100]
-        (do
-          (Thread/sleep (read-string clip-interval))
-          (do-clip fps frame-dir clip-dir (str s3-upload-dir "/" i ".mp4"))
-          ))
+      (future (do-cap cap-time-secs fps frame-dir))
+      (let [clips-iterations (int
+                               (/
+                                (read-string cap-time-secs)
+                                 (/
+                                   (read-string clip-interval-ms)
+                                   1000)))]
+        (dotimes [i clips-iterations]
+          (do
+            (Thread/sleep (read-string clip-interval-ms))
+            (do-clip fps frame-dir clip-dir (str s3-upload-dir "/" i ".mp4"))
+            )))
       ))
