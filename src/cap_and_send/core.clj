@@ -69,14 +69,17 @@
 
 (def s3-upload-chan (chan))
 
-(defn s3-upload [filename] ""
+(defn s3-upload [filename bucket key] ""
   (println "INFO uploading to s3: " filename)
   ;TODO
   (swap! uploaded-clips conj filename))
 
 (go-loop []
-  (let [file (<! s3-upload-chan)]
-    (s3-upload file))
+  (let [data (<! s3-upload-chan)
+        {file :file
+         bucket :bucket
+         key :key} data]
+    (s3-upload file bucket key))
   (recur))
 
 (def cap-chan (chan))
@@ -102,10 +105,9 @@
 
 (defn -main
   "I don't do a whole lot ... yet."
-  [cap-time-secs clip-interval-ms fps frame-dir clip-dir intermediate-dir s3-upload-dir]
+  [cap-time-secs clip-interval-ms fps frame-dir clip-dir s3-upload-dir s3-bucket s3-key]
   (do (clear-dir frame-dir)
       (clear-dir clip-dir)
-      (clear-dir intermediate-dir)
       (clear-dir s3-upload-dir)
 
       (>!! cap-chan {:time-secs cap-time-secs
@@ -125,7 +127,9 @@
                               :frame-dir frame-dir
                               :clip-dir  clip-dir
                               :clipname  clipname})
-              (>!! s3-upload-chan clipname))
+              (>!! s3-upload-chan {:file clipname
+                                   :bucket s3-bucket
+                                   :key s3-key}))
             (println "INFO currently uploaded/ing clips: " @uploaded-clips))))))
 
 ;TODO use `motion` to capture only motion frames
