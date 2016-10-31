@@ -8,7 +8,6 @@
             [clojure.string :as str]))
 
 (defn- move-file [src-file dest-dir] ""
-  (println "copying " src-file " to " dest-dir)
   (fs/copy+ src-file dest-dir))
 
 (defn- delete-file [file] ""
@@ -132,7 +131,6 @@
       (clear-dir intermediate-dir)
       (clear-dir s3-upload-dir)
 
-      ;(future (do-cap cap-time-secs fps frame-dir))
       (>!! cap-chan {:time-secs cap-time-secs
                      :fps fps
                      :frame-dir frame-dir})
@@ -145,11 +143,12 @@
         (dotimes [i clips-iterations]
           (do
             (Thread/sleep (read-string clip-interval-ms))
-            (>!! clip-chan {:fps fps
-                            :frame-dir frame-dir
-                            :clip-dir clip-dir
-                            :clipname (str s3-upload-dir "/" i ".mp4")})
-            (>!! s3-upload-chan (str s3-upload-dir "/" i ".mp4"))
+            (let [clipname (str s3-upload-dir "/" i ".mp4")]
+              (>!! clip-chan {:fps fps
+                              :frame-dir frame-dir
+                              :clip-dir clip-dir
+                              :clipname clipname})
+              (>!! s3-upload-chan clipname))
             (println "currently uploaded/ing clips: " @uploaded-clips)
             )))
       ))
