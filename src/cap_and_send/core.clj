@@ -76,7 +76,7 @@
                 "-pix_fmt"
                 "yuv420p"
                 clip-path]
-            _ (println "in: " in)
+            _ (println "clip in: " in)
             out (apply sh in)]
         (println "did clip: " out)
         (doseq [f the-new-frames]
@@ -90,14 +90,38 @@
   (fs/delete-dir dir)
   (fs/mkdir dir))
 
+(def uploaded-clips (atom []))
+
 (def s3-upload-chan (chan))
 
 (defn s3-upload [filename] ""
-  (println "uploading to s3: " filename))
+  (println "uploading to s3: " filename)
+  (swap! uploaded-clips conj filename))
 
 (go-loop []
   (let [file (<! s3-upload-chan)]
     (s3-upload file))
+  (recur))
+
+(def cap-chan (chan))
+
+(go-loop []
+  (let [data (<! cap-chan)
+        {time-secs :time-secs
+         fps :fps
+         frame-dir :frame-dir} data]
+    (do-cap time-secs fps frame-dir))
+  (recur))
+
+(def clip-chan (chan))
+
+(go-loop []
+  (let [data (<! clip-chan)
+        {fps :fps
+         frame-dir :frame-dir
+         clip-dir :clip-dir
+         clipname :clipname} data]
+    (do-clip fps frame-dir clip-dir clipname))
   (recur))
 
 (defn -main
@@ -108,7 +132,10 @@
       (clear-dir intermediate-dir)
       (clear-dir s3-upload-dir)
 
-      (future (do-cap cap-time-secs fps frame-dir))
+      ;(future (do-cap cap-time-secs fps frame-dir))
+      (>!! cap-chan {:time-secs cap-time-secs
+                     :fps fps
+                     :frame-dir frame-dir})
       (let [clips-iterations (int
                                (/
                                 (read-string cap-time-secs)
@@ -118,7 +145,13 @@
         (dotimes [i clips-iterations]
           (do
             (Thread/sleep (read-string clip-interval-ms))
-            (do-clip fps frame-dir clip-dir (str s3-upload-dir "/" i ".mp4"))
+            (>!! clip-chan {:fps fps
+                            :frame-dir frame-dir
+                            :clip-dir clip-dir
+                            :clipname (str s3-upload-dir "/" i ".mp4")})
             (>!! s3-upload-chan (str s3-upload-dir "/" i ".mp4"))
+            (println "currently uploaded/ing clips: " @uploaded-clips)
             )))
       ))
+
+;TODO use `motion` to capture only motion frames
