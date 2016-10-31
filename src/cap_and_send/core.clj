@@ -90,6 +90,16 @@
   (fs/delete-dir dir)
   (fs/mkdir dir))
 
+(def s3-upload-chan (chan))
+
+(defn s3-upload [filename] ""
+  (println "uploading to s3: " filename))
+
+(go-loop []
+  (let [file (<! s3-upload-chan)]
+    (s3-upload file))
+  (recur))
+
 (defn -main
   "I don't do a whole lot ... yet."
   [cap-time-secs clip-interval-ms fps frame-dir clip-dir intermediate-dir s3-upload-dir]
@@ -109,5 +119,6 @@
           (do
             (Thread/sleep (read-string clip-interval-ms))
             (do-clip fps frame-dir clip-dir (str s3-upload-dir "/" i ".mp4"))
+            (>!! s3-upload-chan (str s3-upload-dir "/" i ".mp4"))
             )))
       ))
