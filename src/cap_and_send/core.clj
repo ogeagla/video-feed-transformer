@@ -13,6 +13,16 @@
 (defn- delete-file [file] ""
   (fs/delete file))
 
+(defn- do-motion [motion-dir device] ""
+  (println "INFO running motion with output dir: " motion-dir " and device: " device)
+  ;TODO actually use motion-dir and device
+  (let [in ["motion" "-c" "resources/motion.conf"]]
+    (try
+      (println "INFO motion sh input: " in)
+      (apply sh in)
+      (catch Throwable t
+        (println "ERROR motion error: " t)))))
+
 (defn- do-cap [cap-time-secs fps frame-dir] ""
   (println "INFO doing capture with total time: " cap-time-secs " fps: " fps " into frame dir: " frame-dir)
   (let [in ["streamer" "-o"
@@ -34,12 +44,13 @@
       (Integer/parseInt)))
 
 (defn- do-clip [fps frame-dir clip-dir clip-path] ""
-
   (let [the-frames (fs/list-dir frame-dir)
         the-frames-ordered (sort-by #(get-clip-number %) the-frames)
-        with-abs (map-indexed (fn [idx itm] (hash-map :idx idx
-                                                      :file itm
-                                                      :new-file (str clip-dir "/" (format "%06d" idx) ".jpeg"))) the-frames-ordered)]
+        with-abs (map-indexed (fn [idx itm]
+                                (hash-map :idx idx
+                                          :file itm
+                                          :new-file (str clip-dir "/" (format "%06d" idx) ".jpeg")))
+                              the-frames-ordered)]
     (do
       (println "INFO making clip from frame count: " (count the-frames))
       (doseq [f with-abs]
@@ -94,6 +105,15 @@
 
 (def clip-chan (chan))
 
+(def motion-chan (chan))
+
+(go-loop []
+  (let [data (<! motion-chan)
+        {motion-dir :motion-dir
+         device :device} data]
+    (do-motion motion-dir device))
+  (recur))
+
 (go-loop []
   (let [data (<! clip-chan)
         {fps       :fps
@@ -105,14 +125,17 @@
 
 (defn -main
   "I don't do a whole lot ... yet."
-  [cap-time-secs clip-interval-ms fps frame-dir clip-dir s3-upload-dir s3-bucket s3-key]
+  [cap-time-secs clip-interval-ms fps frame-dir clip-dir s3-upload-dir motion-dir s3-bucket s3-key]
   (do (clear-dir frame-dir)
       (clear-dir clip-dir)
       (clear-dir s3-upload-dir)
+      (clear-dir motion-dir)
 
       (>!! cap-chan {:time-secs cap-time-secs
                      :fps       fps
                      :frame-dir frame-dir})
+      (>!! motion-chan {:motion-dir "motion"
+                        :device "/dev/video0"})
       (let [clips-iterations (int
                                (/
                                  (read-string cap-time-secs)
