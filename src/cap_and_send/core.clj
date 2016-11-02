@@ -25,7 +25,7 @@
   (println "INFO uploading to s3: " filename)
   (try (upload-to-s3 bucket key filename {:foo "bar"})
        (catch Throwable t
-         (println "ERROR uploading to s3: " t)))
+         (println "ERROR uploading to s3: " (:cause (Throwable->map t)))))
   (swap! uploaded-clips conj filename))
 
 (go-loop []
@@ -36,7 +36,8 @@
     (s3-upload file bucket key))
   (recur))
 
-(def cli-opts [[nil "--capture-time-secs CTS" "Capture time seconds"
+(def cli-opts [[nil "--detect-motion-mode" "EXP Only make clips for motion-detected frames"]
+               [nil "--capture-time-secs CTS" "Capture time seconds"
                 :default 60
                 :parse-fn #(Integer/parseInt %)]
                [nil "--clip-interval-ms CIMS" "Clip interval ms"
@@ -70,7 +71,8 @@
                 s3-upload-dir
                 motion-dir
                 s3-bucket
-                s3-key]} (:options opts)]
+                s3-key
+                detect-motion-mode]} (:options opts)]
 
     (println "INFO cap time secs: " capture-time-secs
              "\nINFO clip interval ms: " clip-interval-ms
@@ -80,18 +82,21 @@
              "\nINFO s3 upload dir: " s3-upload-dir
              "\nINFO motion dir: " motion-dir
              "\nINFO s3 bucket: " s3-bucket
-             "\nINFO s3 key: " s3-key)
+             "\nINFO s3 key: " s3-key
+             "\nINFO motion capture: " detect-motion-mode)
 
     (do (clear-dir frame-dir)
         (clear-dir clip-dir)
         (clear-dir s3-upload-dir)
         (clear-dir motion-dir)
 
-        (put! cap-chan {:time-secs capture-time-secs
-                        :fps       fps
-                        :frame-dir frame-dir})
-        ;(put! motion-chan {:motion-dir "motion"
-        ;                   :device     "/dev/video0"})
+        (if detect-motion-mode
+          (put! motion-chan {:motion-dir "motion"
+                             :device     "/dev/video0"})
+          (put! cap-chan {:time-secs capture-time-secs
+                          :fps       fps
+                          :frame-dir frame-dir}))
+
         (let [clips-iterations (int
                                  (/
                                    capture-time-secs
@@ -105,7 +110,9 @@
                 (put! clip-chan {:fps            fps
                                  :frame-dir      frame-dir
                                  :clip-dir       clip-dir
+                                 :motion-dir     motion-dir
                                  :clipname       clipname
                                  :s3-bucket      s3-bucket
-                                 :s3-upload-chan s3-upload-chan}))
+                                 :s3-upload-chan s3-upload-chan
+                                 :use-motion     detect-motion-mode}))
               (println "INFO currently uploaded/ing clips: " @uploaded-clips)))))))

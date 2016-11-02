@@ -20,7 +20,7 @@
 
 (def clip-chan (chan))
 
-(defn- do-clip [fps frame-dir clip-dir clip-path s3-bucket s3-upload-chan] ""
+(defn- do-clip [fps frame-dir clip-dir clip-path s3-bucket s3-upload-chan motion-dir use-motion] ""
   (let [the-frames (fs/list-dir frame-dir)
         the-frames-ordered (sort-by #(get-clip-number %) the-frames)
         with-abs (map-indexed (fn [idx itm]
@@ -43,7 +43,7 @@
           (println "INFO clip input: " in)
           (apply sh in)
           (catch Throwable t
-            (println "ERROR clip error: " t)))
+            (println "ERROR clip error: " (:cause (Throwable->map t)))))
         (doseq [f the-new-frames]
           (delete-file f))
         (doseq [f the-frames]
@@ -56,9 +56,11 @@
         {fps            :fps
          frame-dir      :frame-dir
          clip-dir       :clip-dir
+         motion-dir     :motion-dir
          clipname       :clipname
          s3-bucket      :s3-bucket
-         s3-upload-chan :s3-upload-chan} data]
-    (do-clip fps frame-dir clip-dir clipname s3-bucket s3-upload-chan))
+         s3-upload-chan :s3-upload-chan
+         use-motion     :use-motion} data]
+    (do-clip fps frame-dir clip-dir clipname s3-bucket s3-upload-chan motion-dir use-motion))
   (recur))
 

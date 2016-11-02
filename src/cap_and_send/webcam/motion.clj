@@ -10,12 +10,12 @@
 (defn- do-motion [motion-dir device] ""
   (println "INFO running motion with output dir: " motion-dir " and device: " device)
   ;TODO actually use motion-dir and device
-  (let [in ["motion" "-c" "resources/motion.conf"]]
+  (let [in ["motion" "-n" "-c" "resources/motion.conf"]]
     (try
       (println "INFO motion sh input: " in)
       (apply sh in)
       (catch Throwable t
-        (println "ERROR motion error: " t)))))
+        (println "ERROR motion error: " (:cause (Throwable->map t)))))))
 
 (go-loop []
   (let [data (<! motion-chan)
