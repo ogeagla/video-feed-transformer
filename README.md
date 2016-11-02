@@ -24,6 +24,8 @@ lein run \
  - and saved in `s3-dir`
  - with motion output saved in `motion-dir`
  - before being uploaded to `s3-bucket`/`s3-key`
+ 
+ 
 ## License
 
 Copyright © 2016 FIXME

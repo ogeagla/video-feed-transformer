@@ -150,10 +150,25 @@
   ""
   [& args]
   (let [opts (cli/parse-opts args cli-opts)
-        {:keys [capture-time-secs clip-interval-ms fps frame-dir clip-dir s3-upload-dir motion-dir s3-bucket s3-key]} (:options opts)
-        ]
+        {:keys [capture-time-secs
+                clip-interval-ms
+                fps
+                frame-dir
+                clip-dir
+                s3-upload-dir
+                motion-dir
+                s3-bucket
+                s3-key]} (:options opts)]
 
-    (println "INFO CL Opts:\n" (:summary opts))
+    (println "NFO cap time secs: " capture-time-secs
+             "\nINFO clip interval ms: " clip-interval-ms
+             "\nINFO fps: " fps
+             "\nINFO frame dir: " frame-dir
+             "\nINFO clip dir: " clip-dir
+             "\nINFO s3 upload dir: " s3-upload-dir
+             "\nINFO motion dir: " motion-dir
+             "\nINFO s3 bucket: " s3-bucket
+             "\nINFO s3 key: " s3-key)
 
     (do (clear-dir frame-dir)
         (clear-dir clip-dir)
