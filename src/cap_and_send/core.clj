@@ -3,9 +3,29 @@
             [clojure.core.async
              :as a
              :refer [>! <! >!! <!! go go-loop chan buffer close! thread
-                     alts! alts!! timeout]]
+                     alts! alts!! timeout put!]]
             [me.raynes.fs :as fs]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.tools.cli :as cli]))
+
+(def uploaded-clips (atom []))
+
+(def s3-upload-chan (chan))
+
+(def cap-chan (chan))
+
+(def clip-chan (chan))
+
+(def motion-chan (chan))
+
+(defn- clear-dir [dir]
+  (fs/delete-dir dir)
+  (fs/mkdir dir))
+
+(defn s3-upload [filename bucket key] ""
+  (println "INFO uploading to s3: " filename)
+  ;TODO
+  (swap! uploaded-clips conj filename))
 
 (defn- move-file [src-file dest-dir] ""
   (fs/copy+ src-file dest-dir))
@@ -28,9 +48,9 @@
   (let [in ["streamer" "-o"
             (str frame-dir "/000000.jpeg")
             "-s" "1920x1080" "-j" "100" "-t"
-            (str (* (read-string fps) (read-string cap-time-secs)))
+            (str (* fps cap-time-secs))
             "-r"
-            fps]]
+            (str fps)]]
     (try
       (println "INFO cap sh input: " in)
       (apply sh in)
@@ -57,7 +77,7 @@
         (move-file (:file f) (:new-file f)))
       (let [the-new-frames (fs/list-dir clip-dir)
             in ["ffmpeg" "-r"
-                fps
+                (str fps)
                 "-f" "image2" "-s" "1920x1080" "-i"
                 (str clip-dir "/%6d.jpeg")
                 "-vcodec" "libx264" "-crf" "25" "-pix_fmt" "yuv420p"
@@ -72,19 +92,6 @@
         (doseq [f the-frames]
           (delete-file f))))))
 
-(defn- clear-dir [dir]
-  (fs/delete-dir dir)
-  (fs/mkdir dir))
-
-(def uploaded-clips (atom []))
-
-(def s3-upload-chan (chan))
-
-(defn s3-upload [filename bucket key] ""
-  (println "INFO uploading to s3: " filename)
-  ;TODO
-  (swap! uploaded-clips conj filename))
-
 (go-loop []
   (let [data (<! s3-upload-chan)
         {file :file
@@ -93,8 +100,6 @@
     (s3-upload file bucket key))
   (recur))
 
-(def cap-chan (chan))
-
 (go-loop []
   (let [data (<! cap-chan)
         {time-secs :time-secs
@@ -102,10 +107,6 @@
          frame-dir :frame-dir} data]
     (do-cap time-secs fps frame-dir))
   (recur))
-
-(def clip-chan (chan))
-
-(def motion-chan (chan))
 
 (go-loop []
   (let [data (<! motion-chan)
@@ -123,36 +124,62 @@
     (do-clip fps frame-dir clip-dir clipname))
   (recur))
 
+(def cli-opts [[nil "--capture-time-secs CTS" "Capture time seconds"
+                :default 60
+                :parse-fn #(Integer/parseInt %)]
+               [nil "--clip-interval-ms CIMS" "Clip interval ms"
+                :default 15000
+                :parse-fn #(Integer/parseInt %)]
+               [nil "--fps FPS" "Frames per second"
+                :default 10
+                :parse-fn #(Integer/parseInt %)]
+               [nil "--frame-dir FD" "Frames dir"
+                :default "frames-dir"]
+               [nil "--clip-dir CD" "Clips dir"
+                :default "clips-dir"]
+               [nil "--s3-upload-dir S3D" "S3 upload dir"
+                :default "s3-dir"]
+               [nil "--motion-dir MD" "Motion dir"
+                :default "motion-dir"]
+               [nil "--s3-bucket S3B" "S3 bucket"
+                :default "fake-s3-bucket"]
+               [nil "--s3-key S3K" "S3 key"
+                :default "fake-s3-key"]])
+
 (defn -main
-  "I don't do a whole lot ... yet."
-  [cap-time-secs clip-interval-ms fps frame-dir clip-dir s3-upload-dir motion-dir s3-bucket s3-key]
-  (do (clear-dir frame-dir)
-      (clear-dir clip-dir)
-      (clear-dir s3-upload-dir)
-      (clear-dir motion-dir)
+  ""
+  [& args]
+  (let [opts (cli/parse-opts args cli-opts)
+        {:keys [capture-time-secs clip-interval-ms fps frame-dir clip-dir s3-upload-dir motion-dir s3-bucket s3-key]} (:options opts)
+        ]
 
-      (>!! cap-chan {:time-secs cap-time-secs
-                     :fps       fps
-                     :frame-dir frame-dir})
-      (>!! motion-chan {:motion-dir "motion"
-                        :device "/dev/video0"})
-      (let [clips-iterations (int
-                               (/
-                                 (read-string cap-time-secs)
+    (println "INFO CL Opts:\n" (:summary opts))
+
+    (do (clear-dir frame-dir)
+        (clear-dir clip-dir)
+        (clear-dir s3-upload-dir)
+        (clear-dir motion-dir)
+
+        (put! cap-chan {:time-secs capture-time-secs
+                        :fps       fps
+                        :frame-dir frame-dir})
+        (put! motion-chan {:motion-dir "motion"
+                           :device     "/dev/video0"})
+        (let [clips-iterations (int
                                  (/
-                                   (read-string clip-interval-ms)
-                                   1000)))]
-        (dotimes [i clips-iterations]
-          (do
-            (Thread/sleep (read-string clip-interval-ms))
-            (let [clipname (str s3-upload-dir "/" i ".mp4")]
-              (>!! clip-chan {:fps       fps
-                              :frame-dir frame-dir
-                              :clip-dir  clip-dir
-                              :clipname  clipname})
-              (>!! s3-upload-chan {:file clipname
-                                   :bucket s3-bucket
-                                   :key s3-key}))
-            (println "INFO currently uploaded/ing clips: " @uploaded-clips))))))
-
-;TODO use `motion` to capture only motion frames
+                                   capture-time-secs
+                                   (/
+                                     clip-interval-ms
+                                     1000)))]
+          (dotimes [i clips-iterations]
+            (do
+              (Thread/sleep clip-interval-ms)
+              (let [clipname (str s3-upload-dir "/" i ".mp4")]
+                (put! clip-chan {:fps       fps
+                                 :frame-dir frame-dir
+                                 :clip-dir  clip-dir
+                                 :clipname  clipname})
+                (put! s3-upload-chan {:file   clipname
+                                      :bucket s3-bucket
+                                      :key    s3-key}))
+              (println "INFO currently uploaded/ing clips: " @uploaded-clips)))))))
