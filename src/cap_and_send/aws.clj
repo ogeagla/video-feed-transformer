@@ -5,5 +5,5 @@
   (s3/put-object :bucket-name bucket
                  :key key
                  :file file
-                 :metadata {:user-metadata  metadata}))
+                 :metadata {:user-metadata metadata}))
 

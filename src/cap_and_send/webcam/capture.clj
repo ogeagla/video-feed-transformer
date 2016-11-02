@@ -23,9 +23,9 @@
         (println "ERROR cap error: " t)))))
 
 (go-loop []
-         (let [data (<! cap-chan)
-               {time-secs :time-secs
-                fps       :fps
-                frame-dir :frame-dir} data]
-           (do-cap time-secs fps frame-dir))
-         (recur))
+  (let [data (<! cap-chan)
+        {time-secs :time-secs
+         fps       :fps
+         frame-dir :frame-dir} data]
+    (do-cap time-secs fps frame-dir))
+  (recur))

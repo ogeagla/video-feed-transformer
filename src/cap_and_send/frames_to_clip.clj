@@ -53,11 +53,11 @@
 
 (go-loop []
   (let [data (<! clip-chan)
-        {fps       :fps
-         frame-dir :frame-dir
-         clip-dir  :clip-dir
-         clipname  :clipname
-         s3-bucket :s3-bucket
+        {fps            :fps
+         frame-dir      :frame-dir
+         clip-dir       :clip-dir
+         clipname       :clipname
+         s3-bucket      :s3-bucket
          s3-upload-chan :s3-upload-chan} data]
     (do-clip fps frame-dir clip-dir clipname s3-bucket s3-upload-chan))
   (recur))

@@ -20,6 +20,6 @@
 (go-loop []
   (let [data (<! motion-chan)
         {motion-dir :motion-dir
-         device :device} data]
+         device     :device} data]
     (do-motion motion-dir device))
   (recur))

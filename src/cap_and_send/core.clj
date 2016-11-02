@@ -30,9 +30,9 @@
 
 (go-loop []
   (let [data (<! s3-upload-chan)
-        {file :file
+        {file   :file
          bucket :bucket
-         key :key} data]
+         key    :key} data]
     (s3-upload file bucket key))
   (recur))
 
@@ -102,10 +102,10 @@
             (do
               (Thread/sleep clip-interval-ms)
               (let [clipname (str s3-upload-dir "/" i ".mp4")]
-                (put! clip-chan {:fps       fps
-                                 :frame-dir frame-dir
-                                 :clip-dir  clip-dir
-                                 :clipname  clipname
-                                 :s3-bucket s3-bucket
+                (put! clip-chan {:fps            fps
+                                 :frame-dir      frame-dir
+                                 :clip-dir       clip-dir
+                                 :clipname       clipname
+                                 :s3-bucket      s3-bucket
                                  :s3-upload-chan s3-upload-chan}))
               (println "INFO currently uploaded/ing clips: " @uploaded-clips)))))))
