@@ -3,17 +3,17 @@
 ## How To Run
 
 When you run:
-```bash
+```
 lein run \ 
-      --capture-time-secs CTS  60 \              #Capture time seconds
-      --clip-interval-ms CIMS  15000 \           #Clip interval ms
-      --fps FPS                10 \              #Frames per second
-      --frame-dir FD           frames-dir \      #Frames dir
-      --clip-dir CD            clips-dir \       #Clips dir
-      --s3-upload-dir S3D      s3-dir \          #S3 upload dir
-      --motion-dir MD          motion-dir \      #Motion dir
-      --s3-bucket S3B          fake-s3-bucket \  #S3 bucket
-      --s3-key S3K             fake-s3-key       #S3 key
+      --capture-time-secs      60 \              #Capture time seconds
+      --clip-interval-ms       15000 \           #Clip interval ms
+      --fps                    10 \              #Frames per second
+      --frame-dir              frames-dir \      #Frames dir
+      --clip-dir               clips-dir \       #Clips dir
+      --s3-upload-dir          s3-dir \          #S3 upload dir
+      --motion-dir             motion-dir \      #Motion dir
+      --s3-bucket              fake-s3-bucket \  #S3 bucket
+      --s3-key                 fake-s3-key       #S3 key
 ```
 
  - capture frames for `60` seconds
