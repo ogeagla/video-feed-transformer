@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [me.raynes/fs "1.4.6"]
                  [org.clojure/core.async "0.2.391"]
-                 [org.clojure/tools.cli "0.3.5"]]
+                 [org.clojure/tools.cli "0.3.5"]
+                 [amazonica "0.3.74"]]
   :main ^:skip-aot cap-and-send.core
-  :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
