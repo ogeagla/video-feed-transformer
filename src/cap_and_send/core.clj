@@ -1,4 +1,5 @@
 (ns cap-and-send.core
+  (:gen-class)
   (:require [clojure.java.shell :refer [sh]]
             [clojure.core.async
              :as a
@@ -160,7 +161,7 @@
                 s3-bucket
                 s3-key]} (:options opts)]
 
-    (println "NFO cap time secs: " capture-time-secs
+    (println "INFO cap time secs: " capture-time-secs
              "\nINFO clip interval ms: " clip-interval-ms
              "\nINFO fps: " fps
              "\nINFO frame dir: " frame-dir
