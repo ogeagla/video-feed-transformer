@@ -3,7 +3,7 @@
 ## How To Run
 
 When you run:
-`
+```bash
 lein run \ 
       --capture-time-secs CTS  60 \              #Capture time seconds
       --clip-interval-ms CIMS  15000 \           #Clip interval ms
@@ -14,7 +14,7 @@ lein run \
       --motion-dir MD          motion-dir \      #Motion dir
       --s3-bucket S3B          fake-s3-bucket \  #S3 bucket
       --s3-key S3K             fake-s3-key       #S3 key
-`
+```
 
  - capture frames for `60` seconds
  - every `15000` ms, create a video clip from the frames accumulated since last clip generation
