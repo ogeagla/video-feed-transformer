@@ -11,7 +11,7 @@
             [cap-and-send.aws :refer [upload-to-s3]]
             [cap-and-send.webcam.motion :refer [motion-chan]]
             [cap-and-send.webcam.capture :refer [cap-chan]]
-            [cap-and-send.frames-to-clip :refer [clip-chan]]))
+            [cap-and-send.make-clips :refer [clip-chan]]))
 
 (def uploaded-clips (atom []))
 
@@ -114,5 +114,6 @@
                                  :clipname       clipname
                                  :s3-bucket      s3-bucket
                                  :s3-upload-chan s3-upload-chan
-                                 :use-motion     detect-motion-mode}))
+                                 :use-motion     detect-motion-mode
+                                 :s3-dir         s3-upload-dir}))
               (println "INFO currently uploaded/ing clips: " @uploaded-clips)))))))
