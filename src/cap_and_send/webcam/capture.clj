@@ -20,7 +20,7 @@
       (println "INFO cap sh input: " in)
       (apply sh in)
       (catch Throwable t
-        (println "ERROR cap error: " t)))))
+        (println "ERROR cap error: " (:cause (Throwable->map t)))))))
 
 (go-loop []
   (let [data (<! cap-chan)

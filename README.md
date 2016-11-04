@@ -5,6 +5,7 @@
 When you run:
 ```
 lein run \ 
+      --detect-motion-mode     true \            #Whether or not to only make clips when motion is detected
       --capture-time-secs      60 \              #Capture time seconds
       --clip-interval-ms       15000 \           #Clip interval ms
       --fps                    10 \              #Frames per second
