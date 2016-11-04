@@ -36,7 +36,8 @@
     (s3-upload file bucket key))
   (recur))
 
-(def cli-opts [[nil "--detect-motion-mode" "EXP Only make clips for motion-detected frames"]
+(def cli-opts [[nil "--upload-to-s3" "Whether or not to upload to s3"]
+               [nil "--detect-motion-mode" "EXP Only make clips for motion-detected frames"]
                [nil "--capture-time-secs CTS" "Capture time seconds"
                 :default 60
                 :parse-fn #(Integer/parseInt %)]
@@ -72,7 +73,8 @@
                 motion-dir
                 s3-bucket
                 s3-key
-                detect-motion-mode]} (:options opts)]
+                detect-motion-mode
+                upload-to-s3]} (:options opts)]
 
     (println "INFO cap time secs: " capture-time-secs
              "\nINFO clip interval ms: " clip-interval-ms
@@ -83,7 +85,8 @@
              "\nINFO motion dir: " motion-dir
              "\nINFO s3 bucket: " s3-bucket
              "\nINFO s3 key: " s3-key
-             "\nINFO motion capture: " detect-motion-mode)
+             "\nINFO motion capture: " detect-motion-mode
+             "\nINFO upload to s3: " upload-to-s3)
 
     (do (clear-dir frame-dir)
         (clear-dir clip-dir)
@@ -115,5 +118,6 @@
                                  :s3-bucket      s3-bucket
                                  :s3-upload-chan s3-upload-chan
                                  :use-motion     detect-motion-mode
-                                 :s3-dir         s3-upload-dir}))
+                                 :s3-dir         s3-upload-dir
+                                 :upload-to-s3   upload-to-s3}))
               (println "INFO currently uploaded/ing clips: " @uploaded-clips)))))))

@@ -40,17 +40,21 @@
     split))
 
 (defn- do-motion-clips [motion-dir s3-dir s3-upload-chan s3-bucket]
-  (doseq [{:keys [videos pics]} (get-motion-clips motion-dir)]
-    (println "INFO Found vids: " videos)
-    (doseq [pic pics]
-      (delete-file pic))
-    (doseq [vid videos]
-      (let [new-vid-fname (str s3-dir "/" (.getName vid))]
-        (move-file vid
-                   new-vid-fname)
-        (delete-file vid)
-        (put! s3-upload-chan {:file new-vid-fname
-                              :bucket s3-bucket})))))
+  (let [clips (get-motion-clips motion-dir)]
+    (doseq [{:keys [videos pics]} clips]
+      (println "INFO Found vids: " videos)
+      (doseq [pic pics]
+        (delete-file pic))
+      (doseq [vid videos]
+        (let [new-vid-fname (str s3-dir "/" (.getName vid))]
+          (move-file vid
+                     new-vid-fname)
+          (delete-file vid)
+          )))
+    (let [stuff (flatten (map :videos clips))
+        stuff-2 (map #(hash-map :file (str s3-dir "/" (.getName %))
+                                :bucket s3-bucket) stuff)        ]
+      stuff-2)))
 
 (defn- do-clip-from-frames [fps frame-dir clip-intermediate-dir clip-path s3-bucket s3-upload-chan] ""
   (let [the-frames (fs/list-dir frame-dir)
@@ -80,16 +84,20 @@
           (delete-file f))
         (doseq [f the-frames]
           (delete-file f))
-        (put! s3-upload-chan {:file   clip-path
-                              :bucket s3-bucket})))))
+        [{:file   clip-path
+          :bucket s3-bucket}]))))
 
 
-(defn- do-clip [fps frame-dir clip-intermediate-dir clip-path s3-bucket s3-dir s3-upload-chan motion-dir use-motion]
+(defn- do-clip [fps frame-dir clip-intermediate-dir clip-path s3-bucket s3-dir s3-upload-chan motion-dir use-motion upload-to-s3]
   ;(println "INFO do-clip: " fps frame-dir clip-intermediate-dir clip-path s3-bucket s3-dir s3-upload-chan motion-dir use-motion)
-  (if use-motion
-    (do-motion-clips motion-dir s3-dir s3-upload-chan s3-bucket)
-    (do-clip-from-frames fps frame-dir clip-intermediate-dir clip-path s3-bucket s3-upload-chan)))
-
+  (let [clips-data (if use-motion
+                     (do-motion-clips motion-dir s3-dir s3-upload-chan s3-bucket)
+                     (do-clip-from-frames fps frame-dir clip-intermediate-dir clip-path s3-bucket s3-upload-chan))]
+    (if upload-to-s3
+      (doseq [datum clips-data]
+        (println "INFO putting to s3: " datum)
+        (put! s3-upload-chan datum))
+      (println "INFO written to fs: " (vec clips-data)))))
 
 (go-loop []
   (let [data (<! clip-chan)
@@ -101,7 +109,8 @@
          s3-bucket      :s3-bucket
          s3-upload-chan :s3-upload-chan
          use-motion     :use-motion
-         s3-dir         :s3-dir} data]
-    (do-clip fps frame-dir clip-dir clipname s3-bucket s3-dir s3-upload-chan motion-dir use-motion))
+         s3-dir         :s3-dir
+         upload-to-s3   :upload-to-s3} data]
+    (do-clip fps frame-dir clip-dir clipname s3-bucket s3-dir s3-upload-chan motion-dir use-motion upload-to-s3))
   (recur))
 
