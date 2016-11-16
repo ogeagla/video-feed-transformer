@@ -3,9 +3,18 @@
             [clojure.core.async
              :as a
              :refer [>! <! >!! <!! go go-loop chan buffer close! thread
-                     alts! alts!! timeout put!]]))
+                     alts! alts!! timeout put!]]
+            [me.raynes.fs :as fs]))
 
 (def motion-chan (chan))
+
+(defn- copy-conf-to-new [newfile]
+  ""
+  (fs/copy+ "resources/motion.conf" newfile)
+  newfile)
+
+(defn- alter-conf [file new-thing new-thing2]
+  ())
 
 (defn- do-motion [motion-dir device] ""
   (println "INFO running motion with output dir: " motion-dir " and device: " device)

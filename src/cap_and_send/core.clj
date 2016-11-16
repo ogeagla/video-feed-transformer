@@ -99,6 +99,7 @@
         (clear-dir motion-summary-dir)
 
         (if detect-motion-mode
+          ;TODO make these motion params take...
           (put! motion-chan {:motion-dir "motion"
                              :device     "/dev/video0"})
           (put! cap-chan {:time-secs capture-time-secs
