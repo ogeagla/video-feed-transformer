@@ -13,8 +13,12 @@
   (fs/copy+ "resources/motion.conf" newfile)
   newfile)
 
-(defn- alter-conf [file new-thing new-thing2]
+(defn- alter-conf [file motion-dir device]
   ())
+
+(defn- do-motion-conf [config-dest motion-dir device] ""
+  (copy-conf-to-new config-dest)
+  (alter-conf config-dest motion-dir device))
 
 (defn- do-motion [motion-dir device] ""
   (println "INFO running motion with output dir: " motion-dir " and device: " device)
