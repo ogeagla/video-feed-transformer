@@ -32,7 +32,8 @@
 
 (defn- get-motion-clips [motion-dir] ""
   (let [the-files (fs/list-dir motion-dir)
-        grouped-by-event (partition-by #(Integer/parseInt (first (clojure.string/split (.getName %) #"-"))) the-files)
+        grouped-by-event (partition-by #(Integer/parseInt
+                                          (first (clojure.string/split (.getName %) #"-"))) the-files)
         completed  (filter file-coll-has-completed-video grouped-by-event)
         split (map #(hash-map :videos (get-videos-from-file-coll %)
                               :pics   (get-pics-from-file-coll %))
@@ -89,8 +90,10 @@
           :bucket s3-bucket}]))))
 
 
-(defn- do-clip [fps frame-dir clip-intermediate-dir clip-path s3-bucket s3-dir s3-upload-chan motion-dir use-motion upload-to-s3 motion-summary-dir]
-  ;(println "INFO do-clip: " fps frame-dir clip-intermediate-dir clip-path s3-bucket s3-dir s3-upload-chan motion-dir use-motion)
+(defn- do-clip [fps frame-dir clip-intermediate-dir clip-path s3-bucket s3-dir s3-upload-chan
+                motion-dir use-motion upload-to-s3 motion-summary-dir]
+  ;(println "INFO do-clip: " fps frame-dir clip-intermediate-dir clip-path
+  ; s3-bucket s3-dir s3-upload-chan motion-dir use-motion)
   (let [clips-data (if use-motion
                      (do-motion-clips motion-dir s3-dir s3-bucket motion-summary-dir)
                      (do-clip-from-frames fps frame-dir clip-intermediate-dir clip-path s3-bucket))]
@@ -113,6 +116,7 @@
          s3-dir         :s3-dir
          upload-to-s3   :upload-to-s3
          motion-summary-dir :motion-summary-dir} data]
-    (do-clip fps frame-dir clip-dir clipname s3-bucket s3-dir s3-upload-chan motion-dir use-motion upload-to-s3 motion-summary-dir))
+    (do-clip fps frame-dir clip-dir clipname s3-bucket s3-dir s3-upload-chan
+             motion-dir use-motion upload-to-s3 motion-summary-dir))
   (recur))
 

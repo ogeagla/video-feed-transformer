@@ -11,7 +11,8 @@
             [video-feed-transformer.aws :refer [upload-to-s3]]
             [video-feed-transformer.webcam.motion :refer [motion-chan]]
             [video-feed-transformer.webcam.capture :refer [cap-chan]]
-            [video-feed-transformer.make-clips :refer [clip-chan]]))
+            [video-feed-transformer.make-clips :refer [clip-chan]]
+            [video-feed-transformer.transform_feed :refer [feed-chan]]))
 
 (def uploaded-clips (atom []))
 
@@ -62,7 +63,9 @@
                [nil "--s3-key S3K" "S3 key"
                 :default "fake-s3-key"]
                [nil "--device Device" "Video Capture Device"
-                :default "/dev/video0"]])
+                :default "/dev/video0"]
+               [nil "--feed-dir FeedDir" "Feed Dir"
+                :default "feed-dir"]])
 
 (defn -main
   ""
@@ -80,7 +83,8 @@
                 detect-motion-mode
                 upload-to-s3
                 motion-summary-dir
-                device]} (:options opts)]
+                device
+                feed-dir]} (:options opts)]
 
     (println "INFO cap time secs: " capture-time-secs
              "\nINFO clip interval ms: " clip-interval-ms
@@ -94,13 +98,15 @@
              "\nINFO motion capture: " detect-motion-mode
              "\nINFO upload to s3: " upload-to-s3
              "\nINFO motion summary dir: " motion-summary-dir
-             "\nINFO motion capture device: " device)
+             "\nINFO motion capture device: " device
+             "\nINFO feed dir: " feed-dir)
 
     (do (clear-dir frame-dir)
         (clear-dir clip-dir)
         (clear-dir s3-upload-dir)
         (clear-dir motion-dir)
         (clear-dir motion-summary-dir)
+        (clear-dir feed-dir)
 
         (if detect-motion-mode
           ;TODO make these motion params take...
@@ -119,16 +125,17 @@
           (dotimes [i clips-iterations]
             (do
               (Thread/sleep clip-interval-ms)
-              (let [clipname (str s3-upload-dir "/" i ".mp4")]
-                (put! clip-chan {:fps                   fps
+              (let [clipno i]
+                (put! feed-chan {:fps                   fps
                                  :frame-dir             frame-dir
                                  :clip-dir              clip-dir
                                  :motion-dir            motion-dir
-                                 :clipname              clipname
+                                 :clipno              clipno
                                  :s3-bucket             s3-bucket
                                  :s3-upload-chan        s3-upload-chan
                                  :use-motion            detect-motion-mode
                                  :s3-dir                s3-upload-dir
                                  :upload-to-s3          upload-to-s3
-                                 :motion-summary-dir    motion-summary-dir}))
+                                 :motion-summary-dir    motion-summary-dir
+                                 :feed-dir              feed-dir}))
               (println "INFO currently uploaded/ing clips: " @uploaded-clips)))))))
