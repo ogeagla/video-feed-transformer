@@ -5,7 +5,11 @@
              :refer [>! <! >!! <!! go go-loop chan buffer close! thread
                      alts! alts!! timeout put!]]
             [me.raynes.fs :as fs]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [mikera.image.core :as imgz]))
+
+(defn- load-image [path] ""
+  (imgz/load-image path))
 
 (defn- move-file [src-file dest-dir] ""
   (fs/copy+ src-file dest-dir))
