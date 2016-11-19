@@ -60,7 +60,9 @@
                [nil "--s3-bucket S3B" "S3 bucket"
                 :default "fake-s3-bucket"]
                [nil "--s3-key S3K" "S3 key"
-                :default "fake-s3-key"]])
+                :default "fake-s3-key"]
+               [nil "--device Device" "Video Capture Device"
+                :default "/dev/video0"]])
 
 (defn -main
   ""
@@ -77,7 +79,8 @@
                 s3-key
                 detect-motion-mode
                 upload-to-s3
-                motion-summary-dir]} (:options opts)]
+                motion-summary-dir
+                device]} (:options opts)]
 
     (println "INFO cap time secs: " capture-time-secs
              "\nINFO clip interval ms: " clip-interval-ms
@@ -90,7 +93,8 @@
              "\nINFO s3 key: " s3-key
              "\nINFO motion capture: " detect-motion-mode
              "\nINFO upload to s3: " upload-to-s3
-             "\nINFO motion summary dir: " motion-summary-dir)
+             "\nINFO motion summary dir: " motion-summary-dir
+             "\nINFO motion capture device: " device)
 
     (do (clear-dir frame-dir)
         (clear-dir clip-dir)
@@ -99,8 +103,9 @@
         (clear-dir motion-summary-dir)
 
         (if detect-motion-mode
-          (put! motion-chan {:motion-dir "motion"
-                             :device     "/dev/video0"})
+          ;TODO make these motion params take...
+          (put! motion-chan {:motion-dir motion-dir
+                             :device     device})
           (put! cap-chan {:time-secs capture-time-secs
                           :fps       fps
                           :frame-dir frame-dir}))
