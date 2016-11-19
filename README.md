@@ -1,4 +1,6 @@
-# cap-and-send
+# video-feed-transformer
+
+Forked from [cap-and-send](https://github.com/ogeagla/cap-and-send).
 
 ## How To Run
 
