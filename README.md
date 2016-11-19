@@ -14,7 +14,8 @@ lein run \
       --s3-upload-dir          s3-dir \          #S3 upload dir
       --motion-dir             motion-dir \      #Motion dir
       --s3-bucket              fake-s3-bucket \  #S3 bucket
-      --s3-key                 fake-s3-key       #S3 key
+      --s3-key                 fake-s3-key  \    #S3 key
+      --device                 /dev/video0       #Motion video capture device
 ```
 
  - capture frames for `60` seconds
