@@ -32,7 +32,7 @@
 (defn- do-motion [motion-dir device] ""
   (println "INFO running motion with output dir: " motion-dir " and device: " device)
   (let [conf-to-use "resources/motion-0.conf"
-        in ["motion" "-n" "-c" "resources/motion.conf"]]
+        in ["motion" "-n" "-c" "resources/motion-0.conf"]]
     (try
       (println "INFO motion sh input: " in)
       (do-motion-conf conf-to-use motion-dir device)
