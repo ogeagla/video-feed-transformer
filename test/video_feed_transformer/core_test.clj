@@ -1,6 +1,6 @@
-(ns cap-and-send.core-test
+(ns video-feed-transformer.core-test
   (:require [clojure.test :refer :all]
-            [cap-and-send.core :refer :all]))
+            [video-feed-transformer.core :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."

@@ -1,4 +1,4 @@
-(defproject cap-and-send "0.1.0-SNAPSHOT"
+(defproject video-feed-transformer "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -10,5 +10,5 @@
                  [amazonica "0.3.74"]]
   :plugins [[lein-kibit "0.1.2"]
             [jonase/eastwood "0.2.3"]]
-  :main ^:skip-aot cap-and-send.core
+  :main ^:skip-aot video-feed-transformer.core
   :profiles {:uberjar {:aot :all}})

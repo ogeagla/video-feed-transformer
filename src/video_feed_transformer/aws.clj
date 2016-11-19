@@ -1,4 +1,4 @@
-(ns cap-and-send.aws
+(ns video-feed-transformer.aws
   (:require [amazonica.aws.s3 :as s3]))
 
 (defn upload-to-s3 [bucket key file metadata]

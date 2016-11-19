@@ -1,4 +1,4 @@
-(ns cap-and-send.core
+(ns video-feed-transformer.core
   (:gen-class)
   (:require [clojure.java.shell :refer [sh]]
             [clojure.core.async
@@ -8,10 +8,10 @@
             [me.raynes.fs :as fs]
             [clojure.string :as str]
             [clojure.tools.cli :as cli]
-            [cap-and-send.aws :refer [upload-to-s3]]
-            [cap-and-send.webcam.motion :refer [motion-chan]]
-            [cap-and-send.webcam.capture :refer [cap-chan]]
-            [cap-and-send.make-clips :refer [clip-chan]]))
+            [video-feed-transformer.aws :refer [upload-to-s3]]
+            [video-feed-transformer.webcam.motion :refer [motion-chan]]
+            [video-feed-transformer.webcam.capture :refer [cap-chan]]
+            [video-feed-transformer.make-clips :refer [clip-chan]]))
 
 (def uploaded-clips (atom []))
 

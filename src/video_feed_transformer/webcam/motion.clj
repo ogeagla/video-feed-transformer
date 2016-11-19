@@ -1,4 +1,4 @@
-(ns cap-and-send.webcam.motion
+(ns video-feed-transformer.webcam.motion
   (:require [clojure.java.shell :refer [sh]]
             [clojure.core.async
              :as a

@@ -1,4 +1,4 @@
-(ns cap-and-send.make-clips
+(ns video-feed-transformer.make-clips
   (:require [clojure.java.shell :refer [sh]]
             [clojure.core.async
              :as a
