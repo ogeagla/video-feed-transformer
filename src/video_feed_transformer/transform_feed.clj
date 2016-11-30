@@ -8,8 +8,18 @@
             [clojure.string :as str]
             [mikera.image.core :as imgz]))
 
-(defn- load-image [path] ""
+(defn- load-image [path]
+  "loads an image from path"
   (imgz/load-image path))
+
+(defn- get-image-data [img]
+  "get pixels from image"
+  (imgz/get-pixels img))
+
+(defn- get-grid-boxes [width height rows cols]
+  "for a given width, height, num rows and num cols,
+  return a map of [ {:x1 0 :x2 10 :y1 0 :y2 10} ...]"
+  nil)
 
 (defn- move-file [src-file dest-dir] ""
   (fs/copy+ src-file dest-dir))
