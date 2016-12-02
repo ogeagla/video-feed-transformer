@@ -16,10 +16,26 @@
   "get pixels from image"
   (imgz/get-pixels img))
 
-(defn- get-grid-boxes [width height rows cols]
+(defn get-grid-boxes [width height rows cols]
   "for a given width, height, num rows and num cols,
   return a map of [ {:x1 0 :x2 10 :y1 0 :y2 10} ...]"
-  nil)
+  (let [
+        col-w (int (/ width cols))
+        row-h (int (/ height rows))
+        rows-range (range rows)
+        cols-range (range cols)]
+    (into [] (for [r rows-range
+                   c cols-range]
+               (let [r-next (+ 1 r)
+                     c-next (+ 1 c)]
+                 {
+                  ;:row r
+                  ;:col c
+                  :x1 (* col-w c)
+                  :x2 (* col-w c-next)
+                  :y1 (* row-h r)
+                  :y2 (* row-h r-next)}
+                 )))))
 
 (defn- move-file [src-file dest-dir] ""
   (fs/copy+ src-file dest-dir))
@@ -81,18 +97,18 @@
 
 (go-loop []
   (let [data (<! feed-chan)
-        {fps            :fps
-         frame-dir      :frame-dir
-         clip-dir       :clip-dir
-         motion-dir     :motion-dir
-         clipno       :clipno
-         s3-bucket      :s3-bucket
-         s3-upload-chan :s3-upload-chan
-         use-motion     :use-motion
-         s3-dir         :s3-dir
-         upload-to-s3   :upload-to-s3
+        {fps                :fps
+         frame-dir          :frame-dir
+         clip-dir           :clip-dir
+         motion-dir         :motion-dir
+         clipno             :clipno
+         s3-bucket          :s3-bucket
+         s3-upload-chan     :s3-upload-chan
+         use-motion         :use-motion
+         s3-dir             :s3-dir
+         upload-to-s3       :upload-to-s3
          motion-summary-dir :motion-summary-dir
-         feed-dir       :feed-dir} data]
+         feed-dir           :feed-dir} data]
     (do-feed fps frame-dir clip-dir clipno s3-bucket s3-dir s3-upload-chan
              motion-dir use-motion upload-to-s3 motion-summary-dir feed-dir))
   (recur))
