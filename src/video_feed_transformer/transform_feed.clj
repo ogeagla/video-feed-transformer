@@ -37,6 +37,21 @@
                   :y2 (* row-h r-next)}
                  )))))
 
+(defn- get-rect-from-img [img rect]
+  "given an img and rect coords, return subimg pixels")
+
+(defn- get-matching-img-to-corpus [img corpus]
+  "given an image and a collection of imgs, return best match from corpus")
+(defn- assemble-imgs-onto-canvas [canvas imgs-and-rects]
+  "given a set of images, their rect coordinates, and a canvas, assemble the imgs
+  using the grid coords onto the canvas")
+
+(defn- get-argb-avg-of-img [img]
+  "")
+
+(defn- find-closest-match-by-argb-l2 [img-argb corpus-argb]
+  "")
+
 (defn- move-file [src-file dest-dir] ""
   (fs/copy+ src-file dest-dir))
 
