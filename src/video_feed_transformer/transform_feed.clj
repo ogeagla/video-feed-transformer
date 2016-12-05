@@ -52,6 +52,16 @@
 (defn- find-closest-match-by-argb-l2 [img-argb corpus-argb]
   "")
 
+(defn- step-with-new-frame [frame]
+  "")
+
+(defn- persist-frame [frame]
+  "")
+
+(defn- re-mosaic [new-frame]
+  "")
+
+
 (defn- move-file [src-file dest-dir] ""
   (fs/copy+ src-file dest-dir))
 
