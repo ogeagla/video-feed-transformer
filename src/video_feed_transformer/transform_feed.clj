@@ -57,9 +57,9 @@
         r-avg      (average reds)
         b-avg      (average blues)
         g-avg      (average greens)]
-    {:r-avg (float r-avg)
-     :g-avg (float g-avg)
-     :b-avg (float b-avg)}))
+    {:r-avg r-avg
+     :g-avg g-avg
+     :b-avg b-avg}))
 
 
 
