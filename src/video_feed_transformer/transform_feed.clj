@@ -102,6 +102,14 @@
                                                      (map :rgb-avg corpus-for-mosaic-w-rgb-avg))
                                                   target-w-grid-subimgs-and-their-rgb-avg)]))
 
+(defn overlay [background-img foreground-img foreground-x foreground-y]
+  (let [combo (imgz/copy background-img)]
+    (-> combo
+        (.getGraphics)
+        (.drawImage foreground-img foreground-x foreground-y nil)
+        (.dispose))
+    combo))
+
 (defn- move-file [src-file dest-dir] ""
   (fs/copy+ src-file dest-dir))
 
