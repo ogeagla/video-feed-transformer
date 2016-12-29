@@ -8,7 +8,7 @@
             [clojure.string :as str]
             [mikera.image.core :as imgz]))
 
-(defn- load-image [path]
+(defn load-image [path]
   "loads an image from path"
   (imgz/load-image path))
 
@@ -20,25 +20,46 @@
   "for a given width, height, num rows and num cols,
   return a map of [ {:x1 0 :x2 10 :y1 0 :y2 10} ...]"
   (let [
-        col-w (int (/ width cols))
-        row-h (int (/ height rows))
+        col-w      (int (/ width cols))
+        row-h      (int (/ height rows))
         rows-range (range rows)
         cols-range (range cols)]
     (into [] (for [r rows-range
                    c cols-range]
                (let [r-next (+ 1 r)
                      c-next (+ 1 c)]
-                 {
-                  ;:row r
-                  ;:col c
-                  :x1 (* col-w c)
-                  :x2 (* col-w c-next)
-                  :y1 (* row-h r)
-                  :y2 (* row-h r-next)}
-                 )))))
+                 {:row r
+                  :col c
+                  :x1  (* col-w c)
+                  :x2  (* col-w c-next)
+                  :y1  (* row-h r)
+                  :y2  (* row-h r-next)})))))
 
 (defn- get-rect-from-img [img rect]
-  "given an img and rect coords, return subimg pixels")
+  "given an img and rect coords, return subimg"
+  (let [{:keys [x1 y1 x2 y2]} rect]
+    (imgz/sub-image img x1 y1 (- x2 x1) (- y2 y1))))
+
+(defn get-rgb-avg-of-img [img]
+  ""
+  (let [pixels (imgz/get-pixels img)
+        stuff  (.getRGB img 0 0)
+
+        ]
+    [stuff]))
+
+
+
+(defn- build-mosaic [target-img img-coll col-width row-height rows cols]
+  ""
+  (let [target-rects      (get-grid-boxes col-width row-height rows cols)
+        target-w-subimgs  (map #(assoc % :subimage (get-rect-from-img target-img %)) target-rects)
+        target-w-rgb-avg (map #(assoc % :rgb-avg (get-rgb-avg-of-img (:subimage %))) target-w-subimgs)
+
+        corpus-w-rgb-avg (map #(hash-map :rgb-avg (get-rgb-avg-of-img %)
+                                          :image %) img-coll)
+
+        ]))
 
 (defn- get-matching-img-to-corpus [img corpus]
   "given an image and a collection of imgs, return best match from corpus")
@@ -46,10 +67,8 @@
   "given a set of images, their rect coordinates, and a canvas, assemble the imgs
   using the grid coords onto the canvas")
 
-(defn- get-argb-avg-of-img [img]
-  "")
 
-(defn- find-closest-match-by-argb-l2 [img-argb corpus-argb]
+(defn- find-closest-match-by-rgb-l2 [img-rgb corpus-rgb]
   "")
 
 (defn- step-with-new-frame [frame]
@@ -76,24 +95,24 @@
 (def feed-chan (chan))
 
 (defn- do-feed-from-frames [fps frame-dir clip-intermediate-dir clipno s3-bucket feed-dir] ""
-  (let [the-frames (fs/list-dir frame-dir)
+  (let [the-frames         (fs/list-dir frame-dir)
         the-frames-ordered (sort-by #(get-clip-number %) the-frames)
-        with-abs (map-indexed (fn [idx itm]
-                                (hash-map :idx idx
-                                          :file itm
-                                          :new-file (str clip-intermediate-dir "/" (format "%06d" idx) ".jpeg")))
-                              the-frames-ordered)]
+        with-abs           (map-indexed (fn [idx itm]
+                                          (hash-map :idx idx
+                                                    :file itm
+                                                    :new-file (str clip-intermediate-dir "/" (format "%06d" idx) ".jpeg")))
+                                        the-frames-ordered)]
     (do
       (println "INFO making clip from frame count: " (count the-frames))
       (doseq [f with-abs]
         (move-file (:file f) (:new-file f)))
       (let [the-new-frames (fs/list-dir clip-intermediate-dir)
-            in ["ffmpeg" "-r"
-                (str fps)
-                "-f" "image2" "-s" "1920x1080" "-i"
-                (str clip-intermediate-dir "/%6d.jpeg")
-                "-vcodec" "libx264" "-crf" "25" "-pix_fmt" "yuv420p"
-                (str feed-dir "/" clipno ".mp4")]]
+            in             ["ffmpeg" "-r"
+                            (str fps)
+                            "-f" "image2" "-s" "1920x1080" "-i"
+                            (str clip-intermediate-dir "/%6d.jpeg")
+                            "-vcodec" "libx264" "-crf" "25" "-pix_fmt" "yuv420p"
+                            (str feed-dir "/" clipno ".mp4")]]
         (try
           (println "INFO clip input: " in)
           (apply sh in)
