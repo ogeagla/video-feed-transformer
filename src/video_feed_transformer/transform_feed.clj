@@ -40,24 +40,43 @@
   (let [{:keys [x1 y1 x2 y2]} rect]
     (imgz/sub-image img x1 y1 (- x2 x1) (- y2 y1))))
 
+(defn color-int-to-rgb [color-int]
+  {:r (bit-and (bit-shift-right color-int 16) 0xff)
+   :g (bit-and (bit-shift-right color-int 8) 0xff)
+   :b (bit-and color-int 0xff)})
+
+(defn average [coll]
+  (/ (reduce + coll) (count coll)))
+
 (defn get-rgb-avg-of-img [img]
+  (let [pixels     (imgz/get-pixels img)
+        pixels-rgb (map color-int-to-rgb pixels)
+        reds       (map :r pixels-rgb)
+        blues      (map :b pixels-rgb)
+        greens     (map :g pixels-rgb)
+        r-avg      (average reds)
+        b-avg      (average blues)
+        g-avg      (average greens)]
+    {:r-avg (float r-avg)
+     :g-avg (float g-avg)
+     :b-avg (float b-avg)}))
+
+
+
+(defn build-mosaic [target-img img-coll col-width row-height rows cols]
   ""
-  (let [pixels (imgz/get-pixels img)
-        stuff  (.getRGB img 0 0)
+  (let [target-rects     (get-grid-boxes col-width row-height rows cols)
+        target-w-subimgs (map #(assoc %
+                                 :subimage (get-rect-from-img target-img %))
+                              target-rects)
+        target-w-rgb-avg (map #(assoc %
+                                 :rgb-avg (get-rgb-avg-of-img
+                                            (:subimage %)))
+                              target-w-subimgs)
 
-        ]
-    [stuff]))
-
-
-
-(defn- build-mosaic [target-img img-coll col-width row-height rows cols]
-  ""
-  (let [target-rects      (get-grid-boxes col-width row-height rows cols)
-        target-w-subimgs  (map #(assoc % :subimage (get-rect-from-img target-img %)) target-rects)
-        target-w-rgb-avg (map #(assoc % :rgb-avg (get-rgb-avg-of-img (:subimage %))) target-w-subimgs)
-
-        corpus-w-rgb-avg (map #(hash-map :rgb-avg (get-rgb-avg-of-img %)
-                                          :image %) img-coll)
+        corpus-w-rgb-avg (map #(hash-map
+                                 :rgb-avg (get-rgb-avg-of-img %)
+                                 :image %) img-coll)
 
         ]))
 
@@ -80,12 +99,12 @@
 (defn- re-mosaic [new-frame]
   "")
 
-
 (defn- move-file [src-file dest-dir] ""
   (fs/copy+ src-file dest-dir))
 
 (defn- delete-file [file] ""
   (fs/delete file))
+
 (defn- get-clip-number [frame-file] ""
   (-> (.getName frame-file)
       (str/split #"\.")
