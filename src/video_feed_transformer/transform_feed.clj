@@ -61,43 +61,46 @@
      :g-avg g-avg
      :b-avg b-avg}))
 
+(defn rgb-dist [{:keys [r1 r2 g1 g2 b1 b2]}]
+  (Math/sqrt (+
+               (Math/pow (- r2 r1) 2)
+               (Math/pow (- g2 g1) 2)
+               (Math/pow (- b2 b1) 2))))
 
+(defn match-by-rgb-avg [target corpus]
+  (let [with-dist (map #(assoc % :dist (rgb-dist {:r1 (:r-avg target)
+                                                  :g1 (:g-avg target)
+                                                  :b1 (:b-avg target)
+                                                  :r2 (:r-avg %)
+                                                  :g2 (:g-avg %)
+                                                  :b2 (:b-avg %)}))
+                       corpus)
+        sorted    (sort-by :dist with-dist)]
+    {:target  target
+     :matched (first sorted)}))
 
 (defn build-mosaic [target-img img-coll col-width row-height rows cols]
   ""
-  (let [target-rects     (get-grid-boxes col-width row-height rows cols)
-        target-w-subimgs (map #(assoc %
-                                 :subimage (get-rect-from-img target-img %))
-                              target-rects)
-        target-w-rgb-avg (map #(assoc %
-                                 :rgb-avg (get-rgb-avg-of-img
-                                            (:subimage %)))
-                              target-w-subimgs)
+  (let [target-w-rects                          (get-grid-boxes col-width row-height rows cols)
 
-        corpus-w-rgb-avg (map #(hash-map
-                                 :rgb-avg (get-rgb-avg-of-img %)
-                                 :image %) img-coll)
+        target-w-grid-subimgs                   (map #(assoc %
+                                                        :subimage (get-rect-from-img target-img %))
+                                                     target-w-rects)
 
-        ]))
+        target-w-grid-subimgs-and-their-rgb-avg (map #(assoc %
+                                                        :rgb-avg (get-rgb-avg-of-img
+                                                                   (:subimage %)))
+                                                     target-w-grid-subimgs)
 
-(defn- get-matching-img-to-corpus [img corpus]
-  "given an image and a collection of imgs, return best match from corpus")
-(defn- assemble-imgs-onto-canvas [canvas imgs-and-rects]
-  "given a set of images, their rect coordinates, and a canvas, assemble the imgs
-  using the grid coords onto the canvas")
+        corpus-for-mosaic-w-rgb-avg             (map #(hash-map
+                                                        :rgb-avg (get-rgb-avg-of-img %)
+                                                        :image %) img-coll)
 
-
-(defn- find-closest-match-by-rgb-l2 [img-rgb corpus-rgb]
-  "")
-
-(defn- step-with-new-frame [frame]
-  "")
-
-(defn- persist-frame [frame]
-  "")
-
-(defn- re-mosaic [new-frame]
-  "")
+        target-subimgs-and-their-matches        (map
+                                                  #(match-by-rgb-avg
+                                                     (:rgb-avg %)
+                                                     (map :rgb-avg corpus-for-mosaic-w-rgb-avg))
+                                                  target-w-grid-subimgs-and-their-rgb-avg)]))
 
 (defn- move-file [src-file dest-dir] ""
   (fs/copy+ src-file dest-dir))
