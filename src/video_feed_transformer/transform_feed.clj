@@ -100,7 +100,21 @@
                                                   #(match-by-rgb-avg
                                                      (:rgb-avg %)
                                                      (map :rgb-avg corpus-for-mosaic-w-rgb-avg))
-                                                  target-w-grid-subimgs-and-their-rgb-avg)]))
+                                                  target-w-grid-subimgs-and-their-rgb-avg)
+
+        target-w                                (.getWidth target-img)
+        target-h                                (.getHeight target-img)
+        blank-canvas                            (imgz/new-image target-w target-h)
+
+        ]))
+
+(defn overlay-many [background-img foreground-imgs-and-coordinates]
+  (let [combo (imgz/copy background-img)
+        g     (.getGraphics combo)]
+    (doseq [{:keys [img x y]} foreground-imgs-and-coordinates]
+      (.drawImage g img x y nil))
+    (.dispose g)
+    combo))
 
 (defn overlay [background-img foreground-img foreground-x foreground-y]
   (let [combo (imgz/copy background-img)]
