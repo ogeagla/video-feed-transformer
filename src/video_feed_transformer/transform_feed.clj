@@ -88,11 +88,11 @@
         width      (- (:x2 item) (:x1 item))
         height     (- (:y2 item) (:y1 item))
         scaled-img (imgz/resize winner-img width height)
-        x (:x1 item)
-        y (:y1 item)]
+        x          (:x1 item)
+        y          (:y1 item)]
     {:img scaled-img
-     :x x
-     :y y})
+     :x   x
+     :y   y})
 
   )
 
@@ -101,6 +101,7 @@
   (let [combo (imgz/copy background-img)
         g     (.getGraphics combo)]
     (doseq [{:keys [img x y]} foreground-imgs-and-coordinates]
+      (println "drawing img to x, y: " x y)
       (.drawImage g img x y nil))
     (.dispose g)
     combo))
@@ -117,11 +118,11 @@
 (defn build-mosaic [target-img img-coll rows cols]
   ""
   (let [target-w-rects                          (get-grid-boxes
-                                                  (/ (.getWidth target-img) cols)
-                                                  (/ (.getHeight target-img) rows)
+                                                  (.getWidth target-img)
+                                                  (.getHeight target-img)
                                                   rows
                                                   cols)
-
+        _                                       (println "grid: " target-w-rects)
         target-w-grid-subimgs                   (map #(assoc %
                                                         :subimage (get-rect-from-img target-img %))
                                                      target-w-rects)
@@ -146,12 +147,11 @@
 
         target-w                                (.getWidth target-img)
         target-h                                (.getHeight target-img)
+        _                                       (println "canvas w, h: " target-w, target-h)
         blank-canvas                            (imgz/new-image target-w target-h)
-        final (overlay-many blank-canvas stuff-ready-for-composing)
-        _ (println "final: " final)
-        _ (imgz/save final "test-final-img.png")
+        final                                   (overlay-many blank-canvas stuff-ready-for-composing)
+        _                                       (imgz/save final "test-final-img.png")
         ]
-    (println "STUFF1 " target-subimgs-and-their-matches)
     (println "STUFF2 " stuff-ready-for-composing)))
 
 (defn- move-file [src-file dest-dir] ""
