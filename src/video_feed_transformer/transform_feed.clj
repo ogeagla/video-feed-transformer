@@ -79,6 +79,41 @@
     {:target  target
      :matched (first sorted)}))
 
+(defn to-composable [item]
+  ;{:row 0, :col 0, :x1 0, :x2 800, :y1 0, :y2 592, :subimage #object[java.awt.image.BufferedImage 0x5cc87de4 BufferedImage @5cc87de4: type = 2 DirectColorModel: rmask=ff0000 gmask=ff00 bmask=ff amask=ff000000 IntegerInterleavedRaster: width = 800 height = 592 #Bands = 4 xOff = 0 yOff = 0 dataOffset [0] 0], :rgb-avg {:r-avg 7980627/473600, :g-avg 2375387/118400, :b-avg 3078971/118400},
+  ; :match
+  ;      {:target {:r-avg 7980627/473600, :g-avg 2375387/118400, :b-avg 3078971/118400},
+  ;       :matched {:dist 57.55770579152047, :rgb-avg {:r-avg 439801339/7577600, :g-avg 39520433/757760, :b-avg 76113101/1515520}, :image #object[java.awt.image.BufferedImage 0x706690e1 BufferedImage @706690e1: type = 2 DirectColorModel: rmask=ff0000 gmask=ff00 bmask=ff amask=ff000000 IntegerInterleavedRaster: width = 3200 height = 2368 #Bands = 4 xOff = 0 yOff = 0 dataOffset [0] 0]}}}
+  (let [winner-img (:image (:matched (:match item)))
+        width      (- (:x2 item) (:x1 item))
+        height     (- (:y2 item) (:y1 item))
+        scaled-img (imgz/resize winner-img width height)
+        x (:x1 item)
+        y (:y1 item)]
+    {:img scaled-img
+     :x x
+     :y y})
+
+  )
+
+
+(defn overlay-many [background-img foreground-imgs-and-coordinates]
+  (let [combo (imgz/copy background-img)
+        g     (.getGraphics combo)]
+    (doseq [{:keys [img x y]} foreground-imgs-and-coordinates]
+      (.drawImage g img x y nil))
+    (.dispose g)
+    combo))
+
+(defn overlay [background-img foreground-img foreground-x foreground-y]
+  (let [combo (imgz/copy background-img)]
+    (-> combo
+        (.getGraphics)
+        (.drawImage foreground-img foreground-x foreground-y nil)
+        (.dispose))
+    combo))
+
+
 (defn build-mosaic [target-img img-coll rows cols]
   ""
   (let [target-w-rects                          (get-grid-boxes
@@ -107,28 +142,17 @@
                                                               corpus-for-mosaic-w-rgb-avg))
                                                   target-w-grid-subimgs-and-their-rgb-avg)
 
+        stuff-ready-for-composing               (map to-composable target-subimgs-and-their-matches)
+
         target-w                                (.getWidth target-img)
         target-h                                (.getHeight target-img)
         blank-canvas                            (imgz/new-image target-w target-h)
-
+        final (overlay-many blank-canvas stuff-ready-for-composing)
+        _ (println "final: " final)
+        _ (imgz/save final "test-final-img.png")
         ]
-    (println target-subimgs-and-their-matches)))
-
-(defn overlay-many [background-img foreground-imgs-and-coordinates]
-  (let [combo (imgz/copy background-img)
-        g     (.getGraphics combo)]
-    (doseq [{:keys [img x y]} foreground-imgs-and-coordinates]
-      (.drawImage g img x y nil))
-    (.dispose g)
-    combo))
-
-(defn overlay [background-img foreground-img foreground-x foreground-y]
-  (let [combo (imgz/copy background-img)]
-    (-> combo
-        (.getGraphics)
-        (.drawImage foreground-img foreground-x foreground-y nil)
-        (.dispose))
-    combo))
+    (println "STUFF1 " target-subimgs-and-their-matches)
+    (println "STUFF2 " stuff-ready-for-composing)))
 
 (defn- move-file [src-file dest-dir] ""
   (fs/copy+ src-file dest-dir))
