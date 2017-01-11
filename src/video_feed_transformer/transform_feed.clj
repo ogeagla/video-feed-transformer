@@ -71,17 +71,21 @@
   (let [with-dist (map #(assoc % :dist (rgb-dist {:r1 (:r-avg target)
                                                   :g1 (:g-avg target)
                                                   :b1 (:b-avg target)
-                                                  :r2 (:r-avg %)
-                                                  :g2 (:g-avg %)
-                                                  :b2 (:b-avg %)}))
+                                                  :r2 (:r-avg (:rgb-avg %))
+                                                  :g2 (:g-avg (:rgb-avg %))
+                                                  :b2 (:b-avg (:rgb-avg %))}))
                        corpus)
         sorted    (sort-by :dist with-dist)]
     {:target  target
      :matched (first sorted)}))
 
-(defn build-mosaic [target-img img-coll col-width row-height rows cols]
+(defn build-mosaic [target-img img-coll rows cols]
   ""
-  (let [target-w-rects                          (get-grid-boxes col-width row-height rows cols)
+  (let [target-w-rects                          (get-grid-boxes
+                                                  (/ (.getWidth target-img) cols)
+                                                  (/ (.getHeight target-img) rows)
+                                                  rows
+                                                  cols)
 
         target-w-grid-subimgs                   (map #(assoc %
                                                         :subimage (get-rect-from-img target-img %))
@@ -97,16 +101,18 @@
                                                         :image %) img-coll)
 
         target-subimgs-and-their-matches        (map
-                                                  #(match-by-rgb-avg
-                                                     (:rgb-avg %)
-                                                     (map :rgb-avg corpus-for-mosaic-w-rgb-avg))
+                                                  #(assoc % :match
+                                                            (match-by-rgb-avg
+                                                              (:rgb-avg %)
+                                                              corpus-for-mosaic-w-rgb-avg))
                                                   target-w-grid-subimgs-and-their-rgb-avg)
 
         target-w                                (.getWidth target-img)
         target-h                                (.getHeight target-img)
         blank-canvas                            (imgz/new-image target-w target-h)
 
-        ]))
+        ]
+    (println target-subimgs-and-their-matches)))
 
 (defn overlay-many [background-img foreground-imgs-and-coordinates]
   (let [combo (imgz/copy background-img)

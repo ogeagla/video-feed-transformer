@@ -28,3 +28,13 @@
               :g-avg 39520433/757760
               :b-avg 76113101/1515520}
              avg)))))
+
+(deftest does-stuff
+  (testing "Does stuff"
+    (let [a ""]
+      (tf/build-mosaic
+        (imgz/load-image"resources/below-average-photography/0006-2015-07-1405-29-39-IMG_20150714_052937_marked.jpg")
+        [(imgz/load-image"resources/below-average-photography/0006-2015-07-1405-29-39-IMG_20150714_052937_marked.jpg")]
+        2
+        2)
+      )))
