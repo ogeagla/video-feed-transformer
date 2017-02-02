@@ -40,6 +40,6 @@
          (imgz/load-image"resources/below-average-photography/0057-2015-02-0306-28-37-IMG_20150203_062833_marked.jpg")
          (imgz/load-image"resources/below-average-photography/0068-2014-11-2816-57-05-IMG_20141128_165702_marked.jpg")
          (imgz/load-image"resources/below-average-photography/0073-2014-11-1613-18-07-G2654223_marked.jpg")]
-        32
-        32)
+        8
+        8)
       )))
