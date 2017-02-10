@@ -111,9 +111,7 @@
   (imgz/new-image w h))
 
 (defn build-mosaic [target-img img-coll rows cols]
-  (let [
-
-        target-w-rects   (get-grid-boxes
+  (let [target-w-rects   (get-grid-boxes
                            (.getWidth target-img)
                            (.getHeight target-img)
                            rows
