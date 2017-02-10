@@ -8,7 +8,8 @@
                  [org.clojure/core.async "0.2.391"]
                  [org.clojure/tools.cli "0.3.5"]
                  [amazonica "0.3.74"]
-                 [net.mikera/imagez "0.11.0"]]
+                 [net.mikera/imagez "0.11.0"]
+                 [criterium "0.4.4"]]
   :plugins [[lein-kibit "0.1.2"]
             [jonase/eastwood "0.2.3"]]
   :main ^:skip-aot video-feed-transformer.core

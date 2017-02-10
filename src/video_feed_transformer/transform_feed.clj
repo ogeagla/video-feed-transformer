@@ -6,7 +6,8 @@
                      alts! alts!! timeout put!]]
             [me.raynes.fs :as fs]
             [clojure.string :as str]
-            [mikera.image.core :as imgz]))
+            [mikera.image.core :as imgz]
+            [criterium.core :refer [quick-bench]]))
 
 (defn load-image [path]
   "loads an image from path"
@@ -110,41 +111,60 @@
 (defn blank-canvas [w h]
   (imgz/new-image w h))
 
+(defn build-matches [target-w-rects target-img mosaic-coll]
+  (quick-bench (->> target-w-rects
+                    (map (fn [target-w-rect]
+                           (let [subimg (get-rect-from-img target-img target-w-rect)
+                                 rgbavg (get-rgb-avg-of-img subimg)]
+                             (assoc target-w-rect
+                               :subimage subimg
+                               :rgb-avg rgbavg
+                               :match (match-by-rgb-avg rgbavg mosaic-coll))))))))
+
+(defn match-images [target-w-matches mosaic-coll]
+  (quick-bench (map
+                 #(assoc % :match
+                           (match-by-rgb-avg
+                             (:rgb-avg %)
+                             mosaic-coll))
+                 target-w-matches)))
+
+(defn build-mosaic-coll [img-coll]
+  (quick-bench (map #(hash-map
+                       :rgb-avg (get-rgb-avg-of-img %)
+                       :image %)
+                    img-coll)))
+
+(defn build-rects [target-img rows cols]
+  (quick-bench (get-grid-boxes
+                 (.getWidth target-img)
+                 (.getHeight target-img)
+                 rows
+                 cols)))
+
+(defn make-composalbes [matched-imgs]
+  (quick-bench (map to-composable matched-imgs)))
+
 (defn build-mosaic [target-img img-coll rows cols]
-  (let [target-w-rects   (get-grid-boxes
-                           (.getWidth target-img)
-                           (.getHeight target-img)
-                           rows
-                           cols)
+  (let [mosaic-coll     (build-mosaic-coll img-coll)
 
-        mosaic-coll      (map #(hash-map
-                                 :rgb-avg (get-rgb-avg-of-img %)
-                                 :image %)
-                              img-coll)
+        composable-imgs (-> (build-rects target-img rows cols)
+                            (build-matches target-img mosaic-coll)
+                            (match-images mosaic-coll)
+                            (make-composalbes))
 
-        target-w-matches (->> target-w-rects
-                              (map (fn [target-w-rect]
-                                     (let [subimg (get-rect-from-img target-img target-w-rect)
-                                           rgbavg (get-rgb-avg-of-img subimg)]
-                                       (assoc target-w-rect
-                                         :subimage subimg
-                                         :rgb-avg rgbavg
-                                         :match (match-by-rgb-avg rgbavg mosaic-coll))))))
+        target-w        (.getWidth target-img)
+        target-h        (.getHeight target-img)]
+    (quick-bench (-> (blank-canvas target-w target-h)
+                     (overlay-many composable-imgs)
+                     (imgz/save "test-final-img-1.png")))))
 
-        matched-imgs     (map
-                           #(assoc % :match
-                                     (match-by-rgb-avg
-                                       (:rgb-avg %)
-                                       mosaic-coll))
-                           target-w-matches)
 
-        composable-imgs  (map to-composable matched-imgs)
-
-        target-w         (.getWidth target-img)
-        target-h         (.getHeight target-img)]
-    (-> (blank-canvas target-w target-h)
-        (overlay-many composable-imgs)
-        (imgz/save "test-final-img.png"))))
+(defn build-mosaic-from-dir [target-path img-coll-dir rows cols ]
+  (let [target-img (imgz/load-image target-path)
+        img-coll   (->> (fs/list-dir img-coll-dir)
+                        (map imgz/load-image))]
+    (build-mosaic target-img img-coll rows cols)))
 
 (defn- get-clip-number [frame-file] ""
   (-> (.getName frame-file)
